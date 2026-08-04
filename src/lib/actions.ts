@@ -10,17 +10,12 @@ import {
   deleteTaskEvent,
   syncAllTasks as syncAll,
 } from "@/lib/google-calendar";
+import { parseDateInput as parseDate } from "@/lib/dates";
 
 async function requireUserId(): Promise<string> {
   const session = await auth();
   if (!session?.user?.id) redirect("/");
   return session.user.id;
-}
-
-function parseDate(value: FormDataEntryValue | null): Date | null {
-  const s = typeof value === "string" ? value.trim() : "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
-  return new Date(`${s}T00:00:00.000Z`);
 }
 
 const goalSchema = z.object({

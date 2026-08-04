@@ -21,7 +21,7 @@ latérale sur desktop.
 
 ## Stack
 
-- [Next.js 15](https://nextjs.org) (App Router, Server Actions, React 19)
+- [Next.js 16](https://nextjs.org) (App Router, Server Actions, React 19)
 - [Auth.js (NextAuth v5)](https://authjs.dev) — connexion Google OAuth
 - [Prisma](https://prisma.io) — SQLite en dev, PostgreSQL en prod
 - [Tailwind CSS v4](https://tailwindcss.com)
@@ -78,3 +78,31 @@ prisma/schema.prisma       # User/Account/Session + Goal + Task
 La synchro calendrier est **best effort** : si Google est indisponible ou le
 token expiré, l'app reste pleinement utilisable ; le bouton « Synchro Google »
 rattrape le retard.
+
+## CI / CD
+
+Le workflow [`ci.yml`](.github/workflows/ci.yml) tourne sur chaque PR et sur
+`main` :
+
+| Job | Contenu |
+| --- | --- |
+| **Build** | `npm run build` (Prisma generate + Next build + type-check) |
+| **Tests unitaires** | Vitest — `npm test` (`tests/unit/`) |
+| **Sécurité** | `npm audit` (deps prod, high+) + scan de secrets gitleaks |
+| **Tests e2e** | Playwright (Chromium, projets desktop + mobile, `tests/e2e/`) |
+| **Deploy** | Uniquement sur push `main`, après succès des 4 jobs — déploie sur Vercel |
+
+Commandes locales : `npm test` (unitaires) et `npm run test:e2e` (e2e ;
+nécessite un `npm run build` préalable).
+
+### Déploiement
+
+Le job deploy utilise Vercel. Configurez ces secrets GitHub (Settings →
+Secrets and variables → Actions) :
+
+- `VERCEL_TOKEN` — token d'accès Vercel
+- `VERCEL_ORG_ID` et `VERCEL_PROJECT_ID` — depuis `.vercel/project.json`
+  après `vercel link`
+
+Sans `VERCEL_TOKEN`, le job se termine en succès avec un avertissement (aucun
+déploiement) — utile tant que l'hébergement n'est pas choisi.

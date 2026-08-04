@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { toDateString, addDaysUTC } from "@/lib/dates";
 import type { Task } from "@prisma/client";
 
 const CALENDAR_API = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
@@ -42,14 +43,10 @@ export async function getGoogleAccessToken(userId: string): Promise<string | nul
   return data.access_token;
 }
 
-function toDateString(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function eventBody(task: Task & { goal?: { title: string } | null }) {
+export function eventBody(task: Pick<Task, "title" | "done" | "dueDate"> & { goal?: { title: string } | null }) {
   const start = toDateString(task.dueDate!);
-  const end = new Date(task.dueDate!);
-  end.setUTCDate(end.getUTCDate() + 1); // convention Google : fin exclusive pour les événements journée entière
+  // convention Google : fin exclusive pour les événements journée entière
+  const end = addDaysUTC(task.dueDate!, 1);
   return {
     summary: task.done ? `✓ ${task.title}` : task.title,
     description: task.goal ? `Objectif : ${task.goal.title} — via Day` : "via Day",

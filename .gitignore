@@ -29,3 +29,8 @@ next-env.d.ts
 # prisma
 prisma/*.db
 prisma/*.db-journal
+
+# tests
+/test-results/
+/playwright-report/
+/coverage/
