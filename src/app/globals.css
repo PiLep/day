@@ -1,8 +1,98 @@
 @import "tailwindcss";
 
+/* Design system Day — tokens (cf. « Day - Design System », §01–03). */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  --color-bg: #fafafa;
+  --color-surface: #ffffff;
+  --color-border: #e4e4e7;
+  --color-border-soft: #ececee;
+  --color-ink: #18181b;
+  --color-ink-2: #71717a;
+  --color-ink-3: #a1a1aa;
+
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-soft: #eef2ff;
+  --color-accent-100: #e0e7ff;
+
+  --color-late: #d97706;
+  --color-late-soft: #fef3c7;
+  --color-late-ink: #b45309;
+  --color-done: #10b981;
+
+  /* Piste des barres de progression — un cran plus dense que border. */
+  --color-track: #e9e9ec;
+
+  /* 6 couleurs d'objectif. Le rouge vif est exclu : l'ambre porte le retard. */
+  --color-goal-indigo: #6366f1;
+  --color-goal-sky: #0ea5e9;
+  --color-goal-emerald: #10b981;
+  --color-goal-amber: #f59e0b;
+  --color-goal-rose: #f43f5e;
+  --color-goal-violet: #8b5cf6;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-xs: 0 1px 2px rgb(24 24 27 / 5%);
+  --shadow-md: 0 4px 12px rgb(24 24 27 / 8%);
+  --shadow-lg: 0 8px 24px rgb(24 24 27 / 16%);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Les titres du §02 sont en 650 — entre semibold et bold. */
+  --font-weight-strong: 650;
+
+  /* Courbes du §05 · micro-interactions. */
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-glide: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-daypop: daypop 240ms var(--ease-pop);
+  --animate-dayslide: dayslide 220ms ease-out;
+
+  @keyframes daypop {
+    0% {
+      transform: scale(0.5);
+    }
+    60% {
+      transform: scale(1.18);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes dayslide {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* Mode sombre : surcharges sur [data-theme="dark"]. */
+[data-theme="dark"] {
+  --color-bg: #09090b;
+  --color-surface: #18181b;
+  --color-border: #27272a;
+  --color-border-soft: #232326;
+  --color-ink: #fafafa;
+  --color-ink-2: #a1a1aa;
+  --color-ink-3: #71717a;
+  --color-accent: #818cf8;
+  --color-accent-hover: #a5b4fc;
+  --color-accent-soft: rgb(99 102 241 / 16%);
+  --color-accent-100: rgb(99 102 241 / 24%);
+  --color-late: #fbbf24;
+  --color-late-soft: rgb(251 191 36 / 16%);
+  --color-late-ink: #fbbf24;
+  --color-done: #34d399;
+  --color-track: #27272a;
 }
 
 html {
@@ -10,5 +100,30 @@ html {
 }
 
 body {
-  @apply bg-zinc-50 text-zinc-900 antialiased;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Chiffres alignés pour les dates et les pourcentages (§02). */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Anneau de focus commun aux boutons et aux champs (§04). */
+@utility ring-focus {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 25%, transparent);
+}
+
+/* §05 : remplacer les mouvements par de simples fondus courts. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 80ms !important;
+    animation-timing-function: ease !important;
+    transition-duration: 80ms !important;
+    transition-property: opacity, background-color, border-color, color !important;
+  }
 }

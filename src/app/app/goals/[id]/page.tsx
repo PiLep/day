@@ -1,85 +1,175 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
+import { requireUserId } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { deleteGoal } from "@/lib/actions";
 import { taskInclude, serializeTask } from "@/lib/queries";
+import { goalDueLabelFull } from "@/lib/dates";
+import { goalTrio } from "@/lib/goal-colors";
+import { percent, ProgressBar } from "@/components/progress-bar";
 import { TaskItem } from "@/components/task-item";
 import { TaskForm } from "@/components/task-form";
-import { ProgressBar } from "@/components/progress-bar";
+import { GoalForm } from "@/components/goal-form";
+import { ListCard } from "@/components/card";
+import { PageShell } from "@/components/page-shell";
+
+/** Nombre de tâches terminées affichées avant « Tout afficher ». */
+const DONE_PREVIEW = 3;
 
 export default async function GoalDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ edit?: string; done?: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
+  const { edit, done: doneParam } = await searchParams;
+  const userId = await requireUserId();
   const goal = await prisma.goal.findFirst({
-    where: { id, userId: session!.user.id },
+    where: { id, userId },
     include: {
       tasks: {
         include: taskInclude,
-        orderBy: [{ done: "asc" }, { dueDate: "asc" }, { createdAt: "asc" }],
+        orderBy: [{ dueDate: "asc" }, { createdAt: "asc" }],
       },
     },
   });
   if (!goal) notFound();
 
-  const done = goal.tasks.filter((t) => t.done).length;
-  const deleteAction = deleteGoal.bind(null, goal.id);
+  const trio = goalTrio(goal.color);
+  const pending = goal.tasks.filter((t) => !t.done);
+  const completed = goal.tasks.filter((t) => t.done);
+  const pct = percent(completed.length, goal.tasks.length);
+  const showAllDone = doneParam === "all";
+  const shownDone = showAllDone ? completed : completed.slice(0, DONE_PREVIEW);
+  const isEditing = edit === "1";
+  const goalHref = `/app/goals/${goal.id}`;
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-3">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold">
-              <span
-                className="size-3 shrink-0 rounded-full"
-                style={{ backgroundColor: goal.color }}
-              />
-              {goal.title}
-            </h1>
-            {goal.description && (
-              <p className="mt-1 text-sm text-zinc-600">{goal.description}</p>
-            )}
-            {goal.targetDate && (
-              <p className="mt-1 text-xs text-zinc-500">
-                Échéance :{" "}
-                {new Intl.DateTimeFormat("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                  timeZone: "UTC",
-                }).format(goal.targetDate)}
-              </p>
-            )}
-          </div>
-          <form action={deleteAction}>
-            <button
-              type="submit"
-              className="rounded-lg px-3 py-1.5 text-xs text-zinc-500 transition hover:bg-red-50 hover:text-red-600"
-            >
-              Supprimer
-            </button>
-          </form>
-        </div>
-        <ProgressBar done={done} total={goal.tasks.length} color={goal.color} />
-      </header>
+    <PageShell width="narrow">
+      <Link
+        href="/app/goals"
+        className="flex min-h-8 items-center gap-1.5 text-[13.5px] font-semibold text-accent md:text-[13px]"
+      >
+        <span className="text-[17px] leading-none md:text-[16px]" aria-hidden>
+          ‹
+        </span>
+        Objectifs
+      </Link>
 
-      <section className="space-y-3">
-        <TaskForm goals={[]} defaultGoalId={goal.id} />
-        <ul className="space-y-2">
-          {goal.tasks.map((t) => (
-            <TaskItem key={t.id} task={serializeTask(t)} showGoal={false} />
-          ))}
-        </ul>
-        {goal.tasks.length === 0 && (
-          <p className="text-center text-sm text-zinc-400">
-            Découpez cet objectif en premières tâches concrètes.
-          </p>
+      <div className="mt-2 flex items-center gap-2.5 md:mt-3.5 md:gap-3">
+        <span
+          className="size-3 shrink-0 rounded-full md:size-[13px]"
+          style={{ backgroundColor: trio.base }}
+        />
+        <h1 className="min-w-0 truncate text-[24px] font-strong tracking-[-0.02em] md:text-[28px]">
+          {goal.title}
+        </h1>
+        {!isEditing && (
+          <Link
+            href={`${goalHref}?edit=1`}
+            className="ml-auto hidden h-[34px] shrink-0 items-center rounded-[9px] px-3 text-[13px] font-semibold text-zinc-600 transition-colors hover:bg-zinc-100 md:inline-flex"
+          >
+            Modifier
+          </Link>
         )}
-      </section>
-    </div>
+      </div>
+
+      {goal.description && (
+        <p className="mt-1.5 text-[13px] text-ink-2 md:mt-[7px] md:text-[13.5px]">
+          {goal.description}
+        </p>
+      )}
+
+      {isEditing ? (
+        <div className="md:mt-4">
+          <GoalForm
+            goal={{
+              id: goal.id,
+              title: goal.title,
+              description: goal.description,
+              color: goal.color,
+              targetDate: goal.targetDate,
+            }}
+            cancelHref={goalHref}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="mt-3.5 rounded-lg border border-border bg-surface p-4 shadow-xs md:mt-[18px] md:px-5 md:py-[18px]">
+            <div className="flex items-baseline justify-between gap-3">
+              <span
+                className="tnum text-[26px] font-strong tracking-[-0.02em] md:text-[28px]"
+                style={{ color: trio.deep }}
+              >
+                {pct} %
+              </span>
+              <span className="tnum text-right text-[12px] text-ink-3 md:text-[12.5px]">
+                {completed.length} / {goal.tasks.length} tâches
+                {goal.targetDate && ` · échéance ${goalDueLabelFull(goal.targetDate)}`}
+              </span>
+            </div>
+            <ProgressBar
+              done={completed.length}
+              total={goal.tasks.length}
+              color={trio.base}
+              size="lg"
+              className="mt-2.5"
+            />
+          </div>
+
+          <div className="mt-3.5 md:mt-4">
+            <TaskForm
+              goals={[]}
+              defaultGoalId={goal.id}
+              variant="dashed"
+              collapsedLabel="Ajouter une tâche à cet objectif"
+            />
+          </div>
+
+          <p className="mt-5 mb-2 text-[13.5px] font-strong md:mt-[22px] md:text-[14px]">
+            À faire
+          </p>
+          {pending.length > 0 ? (
+            <ListCard>
+              {pending.map((t) => (
+                <TaskItem key={t.id} task={serializeTask(t)} showGoal={false} />
+              ))}
+            </ListCard>
+          ) : (
+            <ListCard className="px-4 py-5 text-center">
+              <p className="text-[13px] text-ink-2">
+                {goal.tasks.length === 0
+                  ? "Découpez cet objectif en premières tâches concrètes."
+                  : "Tout est fait pour cet objectif. Bravo."}
+              </p>
+            </ListCard>
+          )}
+
+          {completed.length > 0 && (
+            <>
+              <div className="mt-4.5 mb-2 flex items-center justify-between md:mt-5">
+                <span className="text-[13.5px] font-strong text-ink-2 md:text-[14px]">
+                  Terminées · {completed.length}
+                </span>
+                {completed.length > DONE_PREVIEW && (
+                  <Link
+                    href={showAllDone ? goalHref : `${goalHref}?done=all`}
+                    className="text-[12px] font-semibold text-accent hover:underline md:text-[12.5px]"
+                  >
+                    {showAllDone ? "Réduire" : "Tout afficher"}
+                  </Link>
+                )}
+              </div>
+              <ListCard muted>
+                {shownDone.map((t) => (
+                  <TaskItem key={t.id} task={serializeTask(t)} showGoal={false} />
+                ))}
+              </ListCard>
+            </>
+          )}
+        </>
+      )}
+    </PageShell>
   );
 }
