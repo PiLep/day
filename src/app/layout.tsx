@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Day — Vos objectifs, jour après jour",
+  title: "Day — Vos objectifs, un jour à la fois",
   description:
-    "Fixez vos objectifs, découpez-les en tâches, suivez-les dans un calendrier synchronisé avec Google Calendar.",
+    "Day découpe vos grands projets en petites tâches planifiées, synchronisées avec Google Calendar. Chaque matin, vous savez par où commencer.",
 };
 
 export const viewport: Viewport = {
