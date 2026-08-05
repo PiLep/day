@@ -2,10 +2,15 @@ import { defineConfig, devices } from "@playwright/test";
 import fs from "node:fs";
 
 // Environnements où Chromium est préinstallé hors du cache Playwright
-// (ex. sandbox distant) : on pointe directement sur le binaire.
-const localChromium = "/opt/pw-browsers/chromium";
-const executablePath =
-  !process.env.CI && fs.existsSync(localChromium) ? localChromium : undefined;
+// (ex. sandbox distant, poste avec une autre version en cache) : on pointe
+// directement sur le binaire, via PLAYWRIGHT_CHROMIUM_PATH ou /opt/pw-browsers.
+const candidates = [
+  process.env.PLAYWRIGHT_CHROMIUM_PATH,
+  "/opt/pw-browsers/chromium",
+].filter((p): p is string => !!p);
+const executablePath = process.env.CI
+  ? undefined
+  : candidates.find((p) => fs.existsSync(p));
 
 export default defineConfig({
   testDir: "tests/e2e",

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import {
   syncTaskToCalendar,
@@ -11,50 +10,47 @@ import {
   syncAllTasks as syncAll,
 } from "@/lib/google-calendar";
 import { parseDateInput as parseDate } from "@/lib/dates";
-
-async function requireUserId(): Promise<string> {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/");
-  return session.user.id;
-}
+import { normalizeGoalColor } from "@/lib/goal-colors";
+import { requireUserId } from "@/lib/session";
 
 const goalSchema = z.object({
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional(),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#6366f1"),
 });
 
-export async function createGoal(formData: FormData) {
-  const userId = await requireUserId();
+/** La couleur est ramenée dans la palette des 6 plutôt que rejetée. */
+function goalFields(formData: FormData) {
   const parsed = goalSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description") || undefined,
-    color: formData.get("color") || "#6366f1",
   });
-  if (!parsed.success) return;
-  await prisma.goal.create({
-    data: {
-      userId,
-      ...parsed.data,
-      targetDate: parseDate(formData.get("targetDate")),
-    },
-  });
+  if (!parsed.success) return null;
+  return {
+    ...parsed.data,
+    color: normalizeGoalColor(formData.get("color")),
+    targetDate: parseDate(formData.get("targetDate")),
+  };
+}
+
+export async function createGoal(formData: FormData) {
+  const userId = await requireUserId();
+  const fields = goalFields(formData);
+  if (!fields) return;
+  await prisma.goal.create({ data: { userId, ...fields } });
   revalidatePath("/app", "layout");
+  redirect("/app/goals");
 }
 
 export async function updateGoal(goalId: string, formData: FormData) {
   const userId = await requireUserId();
-  const parsed = goalSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description") || undefined,
-    color: formData.get("color") || "#6366f1",
-  });
-  if (!parsed.success) return;
+  const fields = goalFields(formData);
+  if (!fields) return;
   await prisma.goal.updateMany({
     where: { id: goalId, userId },
-    data: { ...parsed.data, targetDate: parseDate(formData.get("targetDate")) },
+    data: fields,
   });
   revalidatePath("/app", "layout");
+  redirect(`/app/goals/${goalId}`);
 }
 
 export async function deleteGoal(goalId: string) {
@@ -131,5 +127,9 @@ export async function deleteTask(taskId: string) {
 export async function syncAllTasks() {
   const userId = await requireUserId();
   await syncAll(userId);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { lastSyncedAt: new Date() },
+  });
   revalidatePath("/app", "layout");
 }

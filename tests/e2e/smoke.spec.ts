@@ -4,18 +4,25 @@ test.describe("Landing", () => {
   test("affiche le titre et le bouton de connexion Google", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "Vos objectifs, jour après jour." })
+      page.getByRole("heading", { name: /Vos objectifs,\s*un jour à la fois\./ })
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: /Continuer avec Google/ })
     ).toBeVisible();
   });
 
-  test("présente les trois fonctionnalités clés", async ({ page }) => {
+  test("présente les trois piliers", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Objectifs avec suivi de progression")).toBeVisible();
-    await expect(page.getByText("Todo list simple et rapide")).toBeVisible();
-    await expect(page.getByText("Synchro Google Calendar")).toBeVisible();
+    for (const pillar of ["Découpez", "Planifiez", "Avancez"]) {
+      await expect(page.getByText(pillar, { exact: true })).toBeVisible();
+    }
+  });
+
+  test("annonce la gratuité et la synchro Google Calendar", async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByText("Gratuit · Synchronisé avec Google Calendar")
+    ).toBeVisible();
   });
 });
 
