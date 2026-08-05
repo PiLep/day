@@ -134,10 +134,28 @@ jobs:
           npm i -g vercel@latest
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
-          # Applique les migrations Prisma sur la base de production
-          # (DATABASE_URL vient des variables d'environnement Vercel).
+          # Applique les migrations Prisma sur la base de production.
+          # L'URL vient des variables d'environnement Vercel ; selon le
+          # produit Storage choisi (Neon, Supabase, Prisma Postgres…) elle
+          # n'est pas toujours nommée DATABASE_URL, donc on cherche parmi
+          # les noms usuels.
           npm ci
+          unset DATABASE_URL
           set -a; . .vercel/.env.production.local; set +a
+          RESOLVED=""
+          for candidate in "$DATABASE_URL" "$DATABASE_URL_UNPOOLED" "$POSTGRES_PRISMA_URL" "$POSTGRES_URL" "$POSTGRES_URL_NON_POOLING"; do
+            case "$candidate" in
+              postgres://*|postgresql://*|prisma+postgres://*) RESOLVED="$candidate"; break ;;
+            esac
+          done
+          if [ -z "$RESOLVED" ]; then
+            echo "::error::Aucune URL Postgres trouvée dans l'environnement Vercel (production)."
+            echo "Protocole de DATABASE_URL reçue : '${DATABASE_URL%%://*}' (attendu : postgresql, postgres ou prisma+postgres)."
+            echo "Créez une base dans Vercel → Storage (Neon recommandé) sur l'environnement Production, ou définissez DATABASE_URL manuellement."
+            exit 1
+          fi
+          export DATABASE_URL="$RESOLVED"
+          echo "URL Postgres résolue (protocole : ${DATABASE_URL%%://*}://…)"
           npx prisma migrate deploy
 
           vercel build --prod --token="$VERCEL_TOKEN"
