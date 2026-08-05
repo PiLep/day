@@ -57,8 +57,11 @@ npm run dev                 # http://localhost:3000
   `AUTH_GOOGLE_SECRET`.
 - Ajoutez l'URI de redirection de prod dans Google Cloud Console :
   `https://<domaine>/api/auth/callback/google`.
-- Les migrations Prisma sont appliquées automatiquement par le job deploy
-  de la CI (`prisma migrate deploy`) avant chaque mise en production.
+- Les migrations Prisma sont appliquées automatiquement pendant le build
+  Vercel (script `vercel-build` : `prisma migrate deploy` avant
+  `next build`). Elles tournent sur l'infra Vercel car la `DATABASE_URL`
+  créée via Storage est marquée « Sensitive » et n'est déchiffrable que
+  là-bas.
 
 ## Architecture
 
