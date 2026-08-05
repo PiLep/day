@@ -107,7 +107,7 @@ export function TaskItem({
         type="button"
         aria-label={`Supprimer « ${task.title} »`}
         onClick={() => startTransition(() => deleteTask(task.id))}
-        className="-mr-0.5 shrink-0 text-zinc-300 transition hover:text-ink md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+        className="relative -mr-0.5 shrink-0 text-zinc-300 transition before:absolute before:-inset-[11px] before:content-[''] hover:text-ink md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
       >
         <svg
           viewBox="0 0 24 24"

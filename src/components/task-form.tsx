@@ -1,14 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createTask } from "@/lib/actions";
 import { CalendarIcon } from "@/components/icons";
 import { goalTrio } from "@/lib/goal-colors";
+import { SubmitButton } from "@/components/submit-button";
 
 export type GoalOption = { id: string; title: string; color: string };
 
 const CHIP =
-  "relative inline-flex h-[30px] items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 text-[12px] font-semibold text-ink-2 focus-within:ring-focus";
+  "relative inline-flex h-9 items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 text-[12px] font-semibold text-ink-2 focus-within:ring-focus md:h-[30px]";
 
 /**
  * Ajout de tâche en ligne (§04 · TaskForm inline).
@@ -39,6 +41,16 @@ export function TaskForm({
   const [date, setDate] = useState(defaultDate ?? "");
   const [goalId, setGoalId] = useState(defaultGoalId ?? "");
   const titleRef = useRef<HTMLInputElement>(null);
+
+  // « Nouvelle tâche » (sidebar, FAB) navigue vers `?new=1`. Si le formulaire
+  // est déjà monté, l'attribut autoFocus ne rejoue pas : on ouvre et on met le
+  // focus dès que le paramètre apparaît, sinon le bouton semble sans effet.
+  const wantsNew = useSearchParams().get("new") === "1";
+  useEffect(() => {
+    if (!wantsNew) return;
+    setOpen(true);
+    requestAnimationFrame(() => titleRef.current?.focus());
+  }, [wantsNew]);
 
   if (!open) {
     return (
@@ -143,13 +155,12 @@ export function TaskForm({
           )
         )}
 
-        <button
-          type="submit"
+        <SubmitButton
+          label="Ajouter"
+          pendingLabel="Ajout…"
           disabled={!draft.trim()}
-          className="ml-auto inline-flex h-8 items-center rounded-md px-3.5 text-[12.5px] font-semibold transition-colors disabled:cursor-default disabled:bg-zinc-200 disabled:text-ink-3 enabled:bg-accent enabled:text-white enabled:hover:bg-accent-hover"
-        >
-          Ajouter
-        </button>
+          className="ml-auto inline-flex h-10 items-center rounded-md px-4 text-[13px] font-semibold transition-colors disabled:cursor-default disabled:bg-zinc-200 disabled:text-ink-3 enabled:bg-accent enabled:text-white enabled:hover:bg-accent-hover md:h-8 md:px-3.5 md:text-[12.5px]"
+        />
       </div>
     </form>
   );

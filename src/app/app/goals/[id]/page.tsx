@@ -68,7 +68,7 @@ export default async function GoalDetailPage({
         {!isEditing && (
           <Link
             href={`${goalHref}?edit=1`}
-            className="ml-auto hidden h-[34px] shrink-0 items-center rounded-[9px] px-3 text-[13px] font-semibold text-zinc-600 transition-colors hover:bg-zinc-100 md:inline-flex"
+            className="ml-auto inline-flex h-[34px] shrink-0 items-center rounded-[9px] bg-zinc-100 px-3 text-[13px] font-semibold text-zinc-600 transition-colors hover:bg-zinc-200 md:bg-transparent md:hover:bg-zinc-100"
           >
             Modifier
           </Link>

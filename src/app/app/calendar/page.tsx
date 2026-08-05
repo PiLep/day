@@ -5,6 +5,7 @@ import { taskInclude, serializeTask } from "@/lib/queries";
 import { dayHeading, monthHeading, toDateString } from "@/lib/dates";
 import { goalTrio } from "@/lib/goal-colors";
 import { TaskItem } from "@/components/task-item";
+import { TaskForm } from "@/components/task-form";
 import { ListCard } from "@/components/card";
 import { PageShell } from "@/components/page-shell";
 
@@ -42,14 +43,21 @@ export default async function CalendarPage({
   const prev = new Date(Date.UTC(year, month - 1, 1));
   const next = new Date(Date.UTC(year, month + 1, 1));
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      userId,
-      dueDate: { gte: monthStart, lt: monthEnd },
-    },
-    include: taskInclude,
-    orderBy: [{ done: "asc" }, { createdAt: "asc" }],
-  });
+  const [tasks, goalOptions] = await Promise.all([
+    prisma.task.findMany({
+      where: {
+        userId,
+        dueDate: { gte: monthStart, lt: monthEnd },
+      },
+      include: taskInclude,
+      orderBy: [{ done: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.goal.findMany({
+      where: { userId, archived: false },
+      select: { id: true, title: true, color: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   const byDay = new Map<number, typeof tasks>();
   for (const t of tasks) {
@@ -94,7 +102,7 @@ export default async function CalendarPage({
         <div className="flex items-center gap-1.5 md:gap-2">
           <Link
             href="/app/calendar"
-            className="hidden h-9 items-center rounded-md bg-accent-soft px-3.5 text-[13px] font-semibold text-accent-hover transition-colors hover:bg-accent-100 md:inline-flex"
+            className="inline-flex h-[34px] items-center rounded-md bg-accent-soft px-3 text-[12.5px] font-semibold text-accent-hover transition-colors hover:bg-accent-100 md:h-9 md:px-3.5 md:text-[13px]"
           >
             Aujourd&apos;hui
           </Link>
@@ -239,6 +247,19 @@ export default async function CalendarPage({
             </p>
           </ListCard>
         )}
+
+        {/* Créer directement sur le jour sélectionné, sans quitter le
+            calendrier. La clé remonte le formulaire quand le jour change,
+            pour que la date par défaut suive la sélection. */}
+        <div className="mt-2.5">
+          <TaskForm
+            key={toDateString(selected)}
+            goals={goalOptions}
+            defaultDate={toDateString(selected)}
+            variant="dashed"
+            collapsedLabel="Ajouter une tâche ce jour-là"
+          />
+        </div>
       </div>
     </PageShell>
   );

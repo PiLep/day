@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createGoal, deleteGoal, updateGoal } from "@/lib/actions";
 import { CalendarIcon } from "@/components/icons";
+import { SubmitButton } from "@/components/submit-button";
 import { GOAL_COLORS, DEFAULT_GOAL_COLOR } from "@/lib/goal-colors";
 import { toDateString } from "@/lib/dates";
 
@@ -128,24 +129,22 @@ export function GoalForm({
               >
                 Annuler
               </Link>
-              <button
-                type="submit"
-                className="flex h-12 flex-1 items-center justify-center rounded-md bg-accent text-[15px] font-semibold text-white shadow-xs transition-colors hover:bg-accent-hover md:h-[38px] md:text-[13.5px]"
-              >
-                {submitLabel}
-              </button>
+              <SubmitButton
+                label={submitLabel}
+                pendingLabel={editing ? "Enregistrement…" : "Création…"}
+                className="flex h-12 flex-1 items-center justify-center rounded-md bg-accent text-[15px] font-semibold text-white shadow-xs transition-colors hover:bg-accent-hover disabled:opacity-60 md:h-[38px] md:text-[13.5px]"
+              />
             </div>
           </div>
         </form>
 
         {editing && (
           <form action={deleteGoal.bind(null, goal.id)} className="mt-3 md:mt-4">
-            <button
-              type="submit"
-              className="h-9 rounded-md px-3 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-red-50 hover:text-red-600"
-            >
-              Supprimer l&apos;objectif
-            </button>
+            <SubmitButton
+              label="Supprimer l'objectif"
+              pendingLabel="Suppression…"
+              className="h-10 rounded-md px-3 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60 md:h-9"
+            />
           </form>
         )}
       </div>

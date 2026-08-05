@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   CalendarIcon,
   ChecklistIcon,
@@ -150,19 +150,27 @@ export function TabBar() {
 }
 
 /**
- * Bouton flottant mobile. Sur « Objectifs » il ouvre la création d'objectif,
- * partout ailleurs une nouvelle tâche — en un tap.
+ * Bouton flottant mobile. Sur « Objectifs » il ouvre la création d'objectif ;
+ * sur le calendrier et le détail d'un objectif il ouvre le formulaire de tâche
+ * en place (jour sélectionné / objectif courant conservés) ; partout ailleurs
+ * une nouvelle tâche — en un tap.
  */
 export function Fab() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const onGoals = pathname === "/app/goals";
-  const href = onGoals ? "/app/goals?new=1" : "/app/todos?new=1";
+
+  const staysHere =
+    onGoals || pathname.startsWith("/app/goals/") || pathname === "/app/calendar";
+  const params = new URLSearchParams(searchParams);
+  params.set("new", "1");
+  const href = staysHere ? `${pathname}?${params}` : "/app/todos?new=1";
 
   return (
     <Link
       href={href}
       aria-label={onGoals ? "Nouvel objectif" : "Nouvelle tâche"}
-      className="fixed right-4 bottom-[108px] z-20 flex size-14 items-center justify-center rounded-full bg-accent text-[26px] leading-none text-white shadow-[0_8px_24px_rgb(79_70_229/40%)] transition-colors hover:bg-accent-hover md:hidden"
+      className="fixed right-4 bottom-[calc(84px+env(safe-area-inset-bottom))] z-20 flex size-14 items-center justify-center rounded-full bg-accent text-[26px] leading-none text-white shadow-[0_8px_24px_rgb(79_70_229/40%)] transition-[background-color,transform] active:scale-95 hover:bg-accent-hover md:hidden"
     >
       <span aria-hidden>+</span>
     </Link>
