@@ -23,17 +23,19 @@ latérale sur desktop.
 
 - [Next.js 16](https://nextjs.org) (App Router, Server Actions, React 19)
 - [Auth.js (NextAuth v5)](https://authjs.dev) — connexion Google OAuth
-- [Prisma](https://prisma.io) — SQLite en dev, PostgreSQL en prod
+- [Prisma](https://prisma.io) — PostgreSQL (migrations versionnées)
 - [Tailwind CSS v4](https://tailwindcss.com)
 - Google Calendar API (REST, sans SDK)
 
 ## Démarrage
 
 ```bash
-cp .env.example .env   # puis remplir les valeurs (voir ci-dessous)
+cp .env.example .env        # puis remplir les valeurs (voir ci-dessous)
 npm install
-npx prisma db push     # crée la base SQLite
-npm run dev            # http://localhost:3000
+# Lancer un PostgreSQL local, par exemple :
+docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=day postgres:16
+npx prisma migrate deploy   # applique les migrations
+npm run dev                 # http://localhost:3000
 ```
 
 ### Configuration Google (obligatoire pour se connecter)
@@ -47,12 +49,16 @@ npm run dev            # http://localhost:3000
 5. Renseignez `AUTH_GOOGLE_ID` et `AUTH_GOOGLE_SECRET` dans `.env`, et générez
    `AUTH_SECRET` avec `npx auth secret`.
 
-### Production
+### Production (Vercel + Neon)
 
-- Passez `prisma/schema.prisma` sur `provider = "postgresql"` et pointez
-  `DATABASE_URL` vers votre base.
-- Définissez `AUTH_URL` sur votre domaine et ajoutez l'URI de redirection
-  correspondante dans Google Cloud Console.
+- Base : projet Vercel → Storage → Create Database → Neon (Postgres) ;
+  `DATABASE_URL` est injectée automatiquement.
+- Variables d'env Vercel (Production) : `AUTH_SECRET`, `AUTH_GOOGLE_ID`,
+  `AUTH_GOOGLE_SECRET`.
+- Ajoutez l'URI de redirection de prod dans Google Cloud Console :
+  `https://<domaine>/api/auth/callback/google`.
+- Les migrations Prisma sont appliquées automatiquement par le job deploy
+  de la CI (`prisma migrate deploy`) avant chaque mise en production.
 
 ## Architecture
 

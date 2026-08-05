@@ -32,7 +32,9 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     env: {
-      DATABASE_URL: "file:./dev.db",
+      DATABASE_URL:
+        process.env.DATABASE_URL ??
+        "postgresql://postgres:postgres@localhost:5432/day",
       AUTH_SECRET: "e2e-secret-not-for-production",
       AUTH_GOOGLE_ID: "placeholder",
       AUTH_GOOGLE_SECRET: "placeholder",
