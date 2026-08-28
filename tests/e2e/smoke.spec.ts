@@ -34,10 +34,19 @@ test.describe("Espace connecté protégé", () => {
   for (const path of ["/app", "/app/goals", "/app/todos", "/app/calendar"]) {
     test(`redirige ${path} vers la landing sans session`, async ({ page }) => {
       await page.goto(path);
+      // /app/todos et /app/calendar redirigent d'abord vers /app, puis la session manque.
       await expect(page).toHaveURL("/");
       await expect(
         page.getByRole("button", { name: /Continuer avec Google/ })
       ).toBeVisible();
     });
   }
+});
+
+test.describe("Navigation simplifiée", () => {
+  test("la landing ne promet plus un calendrier in-app", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Posez un objectif" })).toBeVisible();
+    await expect(page.getByText(/Google Calendar/i).first()).toBeVisible();
+  });
 });

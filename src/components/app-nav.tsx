@@ -3,21 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
-import {
-  CalendarIcon,
-  ChecklistIcon,
-  SignOutIcon,
-  SunIcon,
-  TargetIcon,
-} from "@/components/icons";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { SignOutIcon, SunIcon, TargetIcon } from "@/components/icons";
 import { signOutAction } from "@/lib/auth-actions";
+import { syncAllTasks } from "@/lib/actions";
 
 const NAV_ITEMS = [
   { href: "/app", label: "Aujourd'hui", Icon: SunIcon },
   { href: "/app/goals", label: "Objectifs", Icon: TargetIcon },
-  { href: "/app/todos", label: "Tâches", Icon: ChecklistIcon },
-  { href: "/app/calendar", label: "Calendrier", Icon: CalendarIcon },
 ] as const;
 
 function useIsActive() {
@@ -26,7 +19,7 @@ function useIsActive() {
     href === "/app" ? pathname === "/app" : pathname.startsWith(href);
 }
 
-/** Marque « Day » : disque indigo, point blanc au centre. */
+/** Marque « Day » : disque accent, point blanc au centre. */
 export function DayMark({ size = 22 }: { size?: number }) {
   return (
     <span
@@ -48,7 +41,7 @@ type UserInfo = {
   image: string | null;
 };
 
-/** Barre latérale desktop — 224 px fixes (§04 · Navigation). */
+/** Barre latérale desktop — 2 destinations seulement. */
 export function Sidebar({ user }: { user: UserInfo }) {
   const isActive = useIsActive();
   const initials = getInitials(user.name, user.email);
@@ -83,7 +76,7 @@ export function Sidebar({ user }: { user: UserInfo }) {
 
       <div className="mt-3.5 px-0.5">
         <Link
-          href="/app/todos?new=1"
+          href="/app?new=1"
           className="flex h-9 items-center justify-center gap-1.5 rounded-md bg-accent text-[13px] font-semibold text-white shadow-xs transition-colors hover:bg-accent-hover focus-visible:ring-focus"
         >
           <span className="text-[16px] leading-none font-medium">+</span>
@@ -91,7 +84,49 @@ export function Sidebar({ user }: { user: UserInfo }) {
         </Link>
       </div>
 
-      <form action={signOutAction} className="mt-auto">
+      <AccountBlock user={user} initials={initials} className="mt-auto" />
+    </aside>
+  );
+}
+
+function AccountBlock({
+  user,
+  initials,
+  className = "",
+}: {
+  user: UserInfo;
+  initials: string;
+  className?: string;
+}) {
+  const [syncing, startSync] = useTransition();
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  return (
+    <div className={className}>
+      <button
+        type="button"
+        disabled={syncing}
+        onClick={() =>
+          startSync(async () => {
+            setSyncMsg(null);
+            try {
+              await syncAllTasks();
+              setSyncMsg("Calendrier synchronisé");
+            } catch {
+              setSyncMsg("Sync impossible — réessaie plus tard");
+            }
+          })
+        }
+        className="mb-1 w-full rounded-md px-2.5 py-2 text-left text-[12px] font-semibold text-ink-2 transition-colors hover:bg-zinc-100 focus-visible:ring-focus disabled:opacity-60"
+      >
+        {syncing ? "Synchro…" : "Resynchroniser Google Calendar"}
+      </button>
+      {syncMsg && (
+        <p className="mb-2 px-2.5 text-[11.5px] text-ink-3" role="status">
+          {syncMsg}
+        </p>
+      )}
+      <form action={signOutAction}>
         <button
           type="submit"
           className="group flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-zinc-100 focus-visible:ring-focus"
@@ -121,17 +156,19 @@ export function Sidebar({ user }: { user: UserInfo }) {
           <span className="sr-only">Se déconnecter</span>
         </button>
       </form>
-    </aside>
+    </div>
   );
 }
 
-/** Compte mobile — accessible depuis chaque écran (menu ancré en haut à droite). */
+/** Compte mobile — menu ancré en haut à droite. */
 export function MobileAccountMenu({ user }: { user: UserInfo }) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const initials = getInitials(user.name, user.email);
+  const [syncing, startSync] = useTransition();
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -198,10 +235,33 @@ export function MobileAccountMenu({ user }: { user: UserInfo }) {
           {user.email && (
             <p className="mt-0.5 truncate text-[12px] text-ink-2">{user.email}</p>
           )}
-          <form action={signOutAction} className="mt-3">
+          <button
+            type="button"
+            disabled={syncing}
+            onClick={() =>
+              startSync(async () => {
+                setSyncMsg(null);
+                try {
+                  await syncAllTasks();
+                  setSyncMsg("Calendrier synchronisé");
+                } catch {
+                  setSyncMsg("Sync impossible");
+                }
+              })
+            }
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-md bg-zinc-100 text-[13px] font-semibold text-ink transition-colors hover:bg-zinc-200 focus-visible:ring-focus disabled:opacity-60"
+          >
+            {syncing ? "Synchro…" : "Resynchroniser Google Calendar"}
+          </button>
+          {syncMsg && (
+            <p className="mt-1.5 text-center text-[11.5px] text-ink-3" role="status">
+              {syncMsg}
+            </p>
+          )}
+          <form action={signOutAction} className="mt-2">
             <button
               type="submit"
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-100 text-[13.5px] font-semibold text-ink transition-colors hover:bg-zinc-200 focus-visible:ring-focus"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-md text-[13.5px] font-semibold text-ink-2 transition-colors hover:bg-zinc-100 focus-visible:ring-focus"
             >
               <SignOutIcon className="size-4" />
               Se déconnecter
@@ -213,7 +273,7 @@ export function MobileAccountMenu({ user }: { user: UserInfo }) {
   );
 }
 
-/** Barre d'onglets mobile — cibles ≥ 44 px, safe-area iOS. */
+/** Barre d'onglets mobile — 2 destinations. */
 export function TabBar() {
   const isActive = useIsActive();
 
@@ -244,21 +304,19 @@ export function TabBar() {
   );
 }
 
-/**
- * Bouton flottant mobile. Sur « Objectifs » il ouvre la création d'objectif ;
- * sur le calendrier et le détail d'un objectif il ouvre le formulaire de tâche
- * en place ; partout ailleurs une nouvelle tâche — en un tap.
- */
+/** FAB : nouvelle tâche, ou nouvel objectif sur /goals. */
 export function Fab() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const onGoals = pathname === "/app/goals";
+  const onGoals = pathname === "/app/goals" || pathname.startsWith("/app/goals/");
 
-  const staysHere =
-    onGoals || pathname.startsWith("/app/goals/") || pathname === "/app/calendar";
   const params = new URLSearchParams(searchParams);
   params.set("new", "1");
-  const href = staysHere ? `${pathname}?${params}` : "/app/todos?new=1";
+  const href = onGoals
+    ? pathname.startsWith("/app/goals/")
+      ? `${pathname}?${params}`
+      : `/app/goals?${params}`
+    : `/app?${params}`;
 
   return (
     <Link
