@@ -10,7 +10,7 @@ import { SubmitButton } from "@/components/submit-button";
 export type GoalOption = { id: string; title: string; color: string };
 
 const CHIP =
-  "relative inline-flex h-9 items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 text-[12px] font-semibold text-ink-2 focus-within:ring-focus md:h-[30px]";
+  "relative inline-flex h-11 items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 text-[12px] font-semibold text-ink-2 focus-within:ring-focus md:h-[30px]";
 
 /**
  * Ajout de tâche en ligne (§04 · TaskForm inline).
@@ -40,11 +40,9 @@ export function TaskForm({
   const [draft, setDraft] = useState("");
   const [date, setDate] = useState(defaultDate ?? "");
   const [goalId, setGoalId] = useState(defaultGoalId ?? "");
+  const [error, setError] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // « Nouvelle tâche » (sidebar, FAB) navigue vers `?new=1`. Si le formulaire
-  // est déjà monté, l'attribut autoFocus ne rejoue pas : on ouvre et on met le
-  // focus dès que le paramètre apparaît, sinon le bouton semble sans effet.
   const wantsNew = useSearchParams().get("new") === "1";
   useEffect(() => {
     if (!wantsNew) return;
@@ -58,16 +56,17 @@ export function TaskForm({
         type="button"
         onClick={() => {
           setOpen(true);
-          // Le champ n'existe qu'après le rendu suivant.
           requestAnimationFrame(() => titleRef.current?.focus());
         }}
         className={
           variant === "dashed"
-            ? "flex min-h-[46px] w-full items-center gap-2.5 rounded-md border-[1.5px] border-dashed border-zinc-300 px-3.5 text-[13.5px] font-medium text-ink-2 transition-colors hover:border-zinc-400 hover:text-ink"
-            : "flex min-h-[46px] w-full items-center gap-2.5 px-0.5 text-[13.5px] font-medium text-ink-2 transition-colors hover:text-ink"
+            ? "flex min-h-11 w-full items-center gap-2.5 rounded-md border-[1.5px] border-dashed border-zinc-300 px-3.5 text-[13.5px] font-medium text-ink-2 transition-colors hover:border-zinc-400 hover:text-ink focus-visible:ring-focus"
+            : "flex min-h-11 w-full items-center gap-2.5 px-0.5 text-[13.5px] font-medium text-ink-2 transition-colors hover:text-ink focus-visible:ring-focus"
         }
       >
-        <span className="text-[16px] text-ink-3">+</span>
+        <span className="text-[16px] text-ink-3" aria-hidden>
+          +
+        </span>
         {collapsedLabel}
       </button>
     );
@@ -79,38 +78,60 @@ export function TaskForm({
   return (
     <form
       action={async (formData) => {
-        if (!draft.trim()) return;
+        const title = String(formData.get("title") ?? "").trim();
+        if (!title) {
+          setError("Saisissez un titre pour la tâche.");
+          titleRef.current?.focus();
+          return;
+        }
+        setError(null);
         await createTask(formData);
-        // On enchaîne : le titre se vide, la date et l'objectif restent.
         setDraft("");
         titleRef.current?.focus();
       }}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
           setDraft("");
+          setError(null);
           setOpen(false);
         }
       }}
+      noValidate
       className={
         variant === "card"
           ? "flex flex-col gap-3 rounded-[14px] border border-border bg-surface p-3.5 shadow-xs focus-within:border-accent focus-within:ring-focus md:flex-row md:items-center md:gap-2.5 md:py-2.5 md:pr-2.5 md:pl-4"
           : "flex flex-col gap-3 rounded-[14px] border border-accent bg-surface p-3 ring-focus md:flex-row md:items-center md:gap-2.5"
       }
     >
-      <input
-        ref={titleRef}
-        name="title"
-        required
-        maxLength={300}
-        autoFocus={autoFocus}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        placeholder="Ajouter une tâche…"
-        aria-label="Titre de la tâche"
-        className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-3"
-      />
+      <div className="min-w-0 flex-1">
+        <label htmlFor="task-title" className="sr-only">
+          Titre de la tâche
+        </label>
+        <input
+          ref={titleRef}
+          id="task-title"
+          name="title"
+          required
+          maxLength={300}
+          autoFocus={autoFocus}
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            if (error) setError(null);
+          }}
+          placeholder="Ajouter une tâche…"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "task-title-error" : undefined}
+          className="w-full min-w-0 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-3 focus-visible:outline-none"
+        />
+        {error && (
+          <p id="task-title-error" role="alert" className="mt-1 text-[12.5px] font-medium text-red-600">
+            {error}
+          </p>
+        )}
+      </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <label className={CHIP}>
           <CalendarIcon className="size-3" strokeWidth={2} />
           <span className="tnum">{date ? formatChipDate(date) : "Date"}</span>
@@ -131,7 +152,8 @@ export function TaskForm({
             <label className={`${CHIP} max-w-[170px]`}>
               <span
                 className="size-[7px] shrink-0 rounded-full"
-                style={{ backgroundColor: trio ? trio.base : "#d4d4d8" }}
+                style={{ backgroundColor: trio ? trio.base : "#a1a1aa" }}
+                aria-hidden
               />
               <span className="truncate">
                 {selectedGoal ? selectedGoal.title : "Objectif"}
@@ -158,8 +180,7 @@ export function TaskForm({
         <SubmitButton
           label="Ajouter"
           pendingLabel="Ajout…"
-          disabled={!draft.trim()}
-          className="ml-auto inline-flex h-10 items-center rounded-md px-4 text-[13px] font-semibold transition-colors disabled:cursor-default disabled:bg-zinc-200 disabled:text-ink-3 enabled:bg-accent enabled:text-white enabled:hover:bg-accent-hover md:h-8 md:px-3.5 md:text-[12.5px]"
+          className="ml-auto inline-flex h-11 items-center rounded-md bg-accent px-4 text-[13px] font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-60 md:h-8 md:px-3.5 md:text-[12.5px]"
         />
       </div>
     </form>
