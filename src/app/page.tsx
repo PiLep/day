@@ -53,9 +53,9 @@ export default async function LandingPage() {
           </form>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col justify-center px-5 pb-8 pt-10 md:px-10 md:pb-12 md:pt-6">
-          <div className="landing-rise grid items-end gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] md:gap-14 lg:gap-20">
-            <div className="max-w-[34rem]">
+        <div className="flex w-full flex-1 flex-col justify-center pt-8 pb-0 md:pt-4">
+          <div className="landing-rise grid w-full items-end gap-8 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.1fr)] md:gap-0">
+            <div className="max-w-[34rem] px-5 md:px-10 md:pb-16 lg:pl-16">
               <p className="font-[family-name:var(--font-display)] text-[clamp(4.5rem,18vw,9.5rem)] leading-[0.85] font-semibold tracking-[-0.055em]">
                 Day
               </p>
@@ -78,8 +78,8 @@ export default async function LandingPage() {
               </div>
             </div>
 
-            {/* Plan visuel dominant : l'écran Aujourd'hui, edge-to-edge sur mobile */}
-            <div className="landing-device relative md:justify-self-end">
+            {/* Plan visuel dominant : product UI plein bord droit */}
+            <div className="landing-device relative min-h-[420px] w-full md:min-h-[560px]">
               <TodayPreview />
             </div>
           </div>
@@ -186,11 +186,11 @@ export default async function LandingPage() {
   );
 }
 
-/** Aperçu produit : l'écran Aujourd'hui — ancre visuelle, pas une carte décorative. */
+/** Aperçu produit : l'écran Aujourd'hui — plan visuel plein bord. */
 function TodayPreview() {
   return (
-    <div className="landing-preview relative w-full overflow-hidden rounded-[28px] border border-[var(--land-line)] bg-[var(--land-surface)] md:max-w-[420px] md:rounded-[32px]">
-      <div className="flex items-center justify-between border-b border-[var(--land-line)] px-5 py-3.5">
+    <div className="landing-preview relative flex h-full min-h-[420px] w-full flex-col overflow-hidden border-t border-[var(--land-line)] bg-[var(--land-surface)] md:min-h-[560px] md:border-t-0 md:border-l">
+      <div className="flex items-center justify-between border-b border-[var(--land-line)] px-5 py-3.5 md:px-8 md:py-4">
         <span className="font-[family-name:var(--font-display)] text-[14px] font-semibold tracking-[-0.02em]">
           Aujourd&apos;hui
         </span>
@@ -199,18 +199,18 @@ function TodayPreview() {
         </span>
       </div>
 
-      <div className="px-5 pt-5 pb-6">
+      <div className="flex flex-1 flex-col px-5 pt-6 pb-8 md:px-8 md:pt-8">
         <p className="text-[11px] font-semibold tracking-[0.07em] text-[var(--land-mute)] uppercase">
           Vendredi 28 août
         </p>
-        <p className="mt-1 font-[family-name:var(--font-display)] text-[28px] font-semibold tracking-[-0.03em]">
+        <p className="mt-1 font-[family-name:var(--font-display)] text-[28px] font-semibold tracking-[-0.03em] md:text-[32px]">
           Bonjour
         </p>
-        <p className="mt-1.5 text-[13.5px] text-[var(--land-mute)]">
+        <p className="mt-1.5 text-[13.5px] text-[var(--land-mute)] md:text-[14.5px]">
           3 tâches pour avancer, à votre rythme.
         </p>
 
-        <ul className="mt-6 flex flex-col">
+        <ul className="mt-7 flex flex-col md:mt-9">
           <PreviewTask title="Courir 5 km" goal="Sport" tone="emerald" />
           <PreviewTask title="Écrire 500 mots" goal="Roman" tone="forest" done />
           <PreviewTask
@@ -221,16 +221,20 @@ function TodayPreview() {
           />
         </ul>
 
-        <div className="mt-5 rounded-[14px] bg-[var(--land-wash)] px-3.5 py-3">
-          <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[var(--land-accent)]" />
-            <span className="text-[13px] font-semibold">Écrire mon roman</span>
-            <span className="tnum ml-auto text-[12px] font-semibold text-[var(--land-accent)]">
-              58 %
-            </span>
-          </div>
-          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[var(--land-track)]">
-            <div className="landing-bar h-full w-[58%] rounded-full bg-[var(--land-accent)]" />
+        <div className="mt-auto pt-8">
+          <div className="border-t border-[var(--land-line)] pt-5">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-[var(--land-accent)]" />
+              <span className="text-[13px] font-semibold md:text-[14px]">
+                Écrire mon roman
+              </span>
+              <span className="tnum ml-auto text-[12px] font-semibold text-[var(--land-accent)] md:text-[13px]">
+                58 %
+              </span>
+            </div>
+            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[var(--land-track)]">
+              <div className="landing-bar h-full w-[58%] rounded-full bg-[var(--land-accent)]" />
+            </div>
           </div>
         </div>
       </div>
