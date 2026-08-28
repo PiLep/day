@@ -10,12 +10,18 @@ import { ListCard } from "@/components/card";
 import { PageShell } from "@/components/page-shell";
 import { EmptyState, FreeDayArt } from "@/components/empty-state";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ new?: string }>;
+}) {
   const session = await requireSession();
   const userId = session.user.id;
+  const { new: newParam } = await searchParams;
+  const openComposer = newParam === "1";
   const { start, end } = todayRangeUTC();
 
-  const [todayTasks, lateTasks, goalRows] = await Promise.all([
+  const [todayTasks, lateTasks, undatedTasks, goalRows] = await Promise.all([
     prisma.task.findMany({
       where: { userId, dueDate: { gte: start, lt: end } },
       include: taskInclude,
@@ -28,6 +34,12 @@ export default async function DashboardPage() {
       // Le retard le plus frais d'abord : « hier » avant « lun. 3 août ».
       orderBy: { dueDate: "desc" },
       take: 10,
+    }),
+    prisma.task.findMany({
+      where: { userId, done: false, dueDate: null },
+      include: taskInclude,
+      orderBy: { createdAt: "desc" },
+      take: 8,
     }),
     prisma.goal.findMany({
       where: { userId, archived: false },
@@ -53,7 +65,11 @@ export default async function DashboardPage() {
   }));
 
   const count = todayTasks.length;
-  const firstLaunch = count === 0 && lateTasks.length === 0 && goals.length === 0;
+  const firstLaunch =
+    count === 0 &&
+    lateTasks.length === 0 &&
+    undatedTasks.length === 0 &&
+    goals.length === 0;
 
   return (
     <PageShell>
@@ -67,9 +83,13 @@ export default async function DashboardPage() {
       {firstLaunch ? (
         <EmptyState
           illustration={<FreeDayArt />}
-          title="Journée libre"
-          description="Rien de prévu aujourd'hui. Profitez-en, ou piochez dans vos tâches sans date."
-          action={{ href: "/app/todos", label: "Voir mes tâches", tone: "soft" }}
+          title="Par où commencer ?"
+          description="Posez un objectif, ou ajoutez une seule tâche pour aujourd’hui. Le coach peut aussi vous aider à découper."
+          action={{
+            href: "/app/goals?new=1",
+            label: "Créer un objectif",
+            tone: "primary",
+          }}
         />
       ) : (
         <>
@@ -92,21 +112,35 @@ export default async function DashboardPage() {
                       showDate={false}
                     />
                   ))}
-                  <TaskForm goals={goalOptions} defaultDate={toDateString(start)} />
+                  <TaskForm
+                    goals={goalOptions}
+                    defaultDate={toDateString(start)}
+                    defaultOpen={openComposer}
+                  />
                 </ListCard>
               ) : (
-                <ListCard className="px-5 py-6 text-center md:px-6">
-                  <p className="text-[14px] font-strong">Journée libre</p>
-                  <p className="mx-auto mt-1.5 max-w-[280px] text-[13px] leading-[1.55] text-ink-2">
-                    Rien de prévu aujourd&apos;hui. Profitez-en, ou piochez dans
-                    vos tâches sans date.
+                <ListCard className="px-5 py-6 md:px-6">
+                  <p className="text-center text-[14px] font-strong">
+                    Journée libre
                   </p>
-                  <Link
-                    href="/app/todos"
-                    className="mt-4 inline-flex h-10 items-center rounded-[11px] bg-accent-soft px-4 text-[13.5px] font-semibold text-accent transition-colors hover:bg-accent-100"
-                  >
-                    Voir mes tâches
-                  </Link>
+                  <p className="mx-auto mt-1.5 max-w-[280px] text-center text-[13px] leading-[1.55] text-ink-2">
+                    Rien de daté aujourd&apos;hui. Ajoutez une tâche, ou demandez
+                    au coach un focus réaliste.
+                  </p>
+                  <div className="mt-4">
+                    <TaskForm
+                      goals={goalOptions}
+                      defaultDate={toDateString(start)}
+                      defaultOpen
+                      variant="dashed"
+                      collapsedLabel="Ajouter une tâche pour aujourd’hui"
+                    />
+                  </div>
+                  {undatedTasks.length > 0 && (
+                    <p className="mt-3 text-center text-[12px] text-ink-3">
+                      Ou piochez plus bas dans les tâches sans date.
+                    </p>
+                  )}
                 </ListCard>
               )}
 
@@ -120,11 +154,29 @@ export default async function DashboardPage() {
                       {lateTasks.length}
                     </span>
                     <span className="text-[12px] text-ink-3 md:text-[12.5px]">
-                      quand vous voulez
+                      le coach peut proposer un report
                     </span>
                   </div>
                   <ListCard>
                     {lateTasks.map((t) => (
+                      <TaskItem key={t.id} task={serializeTask(t, start)} />
+                    ))}
+                  </ListCard>
+                </>
+              )}
+
+              {undatedTasks.length > 0 && (
+                <>
+                  <div className="mt-6 mb-2.5 flex items-center gap-2 md:mt-[26px]">
+                    <span className="text-[14px] font-strong md:text-[14.5px]">
+                      Sans date
+                    </span>
+                    <span className="tnum text-[12px] text-ink-3 md:text-[12.5px]">
+                      à dater quand vous voulez
+                    </span>
+                  </div>
+                  <ListCard>
+                    {undatedTasks.map((t) => (
                       <TaskItem key={t.id} task={serializeTask(t, start)} />
                     ))}
                   </ListCard>
@@ -166,6 +218,17 @@ export default async function DashboardPage() {
         </>
       )}
 
+      {firstLaunch && openComposer && (
+        <div className="mt-6">
+          <ListCard>
+            <TaskForm
+              goals={goalOptions}
+              defaultDate={toDateString(start)}
+              defaultOpen
+            />
+          </ListCard>
+        </div>
+      )}
     </PageShell>
   );
 }

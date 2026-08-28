@@ -159,3 +159,90 @@ body {
     animation: var(--animate-daypop);
   }
 }
+
+/* ——— Landing « nouveau Day » ——— */
+.landing {
+  --land-paper: #eef3f0;
+  --land-surface: #ffffff;
+  --land-ink: #14201c;
+  --land-mute: #5a6560;
+  --land-accent: #1f6f5b;
+  --land-line: #d5ddd8;
+  --land-wash: #e4ece7;
+  --land-track: #cfd8d3;
+  font-family: var(--font-body), ui-sans-serif, sans-serif;
+}
+
+.landing-sky {
+  background:
+    radial-gradient(120% 80% at 12% -10%, #c5dde8 0%, transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, #d7e8df 0%, transparent 50%),
+    linear-gradient(180deg, #e7eef2 0%, var(--land-paper) 62%, #f7faf8 100%);
+}
+
+.landing-grain {
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  mix-blend-mode: soft-light;
+}
+
+.landing-refuse {
+  background:
+    radial-gradient(80% 60% at 50% 100%, #d9e8e2 0%, transparent 70%),
+    var(--land-paper);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-rise {
+    animation: land-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .landing-device {
+    animation: land-rise 900ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .landing-bar {
+    animation: land-bar 1100ms 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .landing-check {
+    animation: daypop 240ms 600ms var(--ease-pop) both;
+  }
+
+  .landing-sky {
+    animation: land-sky 18s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes land-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes land-bar {
+  from {
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+}
+
+@keyframes land-sky {
+  from {
+    filter: hue-rotate(0deg) saturate(1);
+  }
+  to {
+    filter: hue-rotate(-8deg) saturate(1.05);
+  }
+}
+

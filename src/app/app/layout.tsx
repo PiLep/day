@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/session";
 import { Fab, MobileAccountMenu, Sidebar, TabBar } from "@/components/app-nav";
+import { CoachPanel } from "@/components/coach-panel";
 
 export default async function AppLayout({
   children,
@@ -20,7 +21,7 @@ export default async function AppLayout({
         Aller au contenu
       </a>
       <Sidebar user={user} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col md:pr-0">
         <MobileAccountMenu user={user} />
         <main
           id="contenu-principal"
@@ -31,6 +32,7 @@ export default async function AppLayout({
         </main>
         <TabBar />
         <Fab />
+        <CoachPanel />
       </div>
     </div>
   );
