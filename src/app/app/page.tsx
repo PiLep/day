@@ -1,17 +1,14 @@
 import Link from "next/link";
-import Image from "next/image";
 import { requireSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { taskInclude, serializeTask, todayRangeUTC } from "@/lib/queries";
 import { dayHeading, toDateString } from "@/lib/dates";
-import { signOutAction } from "@/lib/auth-actions";
 import { TaskItem } from "@/components/task-item";
 import { TaskForm } from "@/components/task-form";
 import { GoalMiniCard, type GoalCardData } from "@/components/goal-card";
 import { ListCard } from "@/components/card";
 import { PageShell } from "@/components/page-shell";
 import { EmptyState, FreeDayArt } from "@/components/empty-state";
-import { SignOutIcon } from "@/components/icons";
 
 export default async function DashboardPage() {
   const session = await requireSession();
@@ -60,10 +57,10 @@ export default async function DashboardPage() {
 
   return (
     <PageShell>
-      <p className="text-[11px] font-semibold tracking-[0.06em] text-ink-3 uppercase md:text-[11.5px]">
+      <p className="pr-14 text-[11px] font-semibold tracking-[0.06em] text-ink-3 uppercase md:pr-0 md:text-[11.5px]">
         {dayHeading(start)}
       </p>
-      <h1 className="mt-[3px] text-[28px] font-strong tracking-[-0.02em] md:mt-1 md:text-[30px]">
+      <h1 className="mt-[3px] pr-14 text-[28px] font-strong tracking-[-0.02em] md:mt-1 md:pr-0 md:text-[30px]">
         Bonjour
       </h1>
 
@@ -169,26 +166,6 @@ export default async function DashboardPage() {
         </>
       )}
 
-      {/* Compte — seule sortie sur mobile, la sidebar s'en charge sur desktop. */}
-      <form action={signOutAction} className="mt-8 flex justify-center md:hidden">
-        <button
-          type="submit"
-          className="flex max-w-full items-center gap-2 rounded-md px-3 py-2 text-[12px] text-ink-3 transition-colors hover:bg-zinc-100"
-        >
-          {session.user.image && (
-            <Image
-              src={session.user.image}
-              alt=""
-              width={18}
-              height={18}
-              className="size-[18px] shrink-0 rounded-full"
-            />
-          )}
-          <span className="truncate">{session.user.email}</span>
-          <SignOutIcon className="size-3.5 shrink-0" />
-          <span className="sr-only">Se déconnecter</span>
-        </button>
-      </form>
     </PageShell>
   );
 }

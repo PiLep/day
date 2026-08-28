@@ -57,18 +57,19 @@ export default async function GoalDetailPage({
         Objectifs
       </Link>
 
-      <div className="mt-2 flex items-center gap-2.5 md:mt-3.5 md:gap-3">
+      <div className="mt-2 flex items-start gap-2.5 pr-14 md:mt-3.5 md:gap-3 md:pr-0">
         <span
-          className="size-3 shrink-0 rounded-full md:size-[13px]"
+          className="mt-2 size-3 shrink-0 rounded-full md:mt-2.5 md:size-[13px]"
           style={{ backgroundColor: trio.base }}
+          aria-hidden
         />
-        <h1 className="min-w-0 truncate text-[24px] font-strong tracking-[-0.02em] md:text-[28px]">
+        <h1 className="min-w-0 text-[24px] font-strong tracking-[-0.02em] text-balance md:text-[28px]">
           {goal.title}
         </h1>
         {!isEditing && (
           <Link
             href={`${goalHref}?edit=1`}
-            className="ml-auto inline-flex h-[34px] shrink-0 items-center rounded-[9px] bg-zinc-100 px-3 text-[13px] font-semibold text-zinc-600 transition-colors hover:bg-zinc-200 md:bg-transparent md:hover:bg-zinc-100"
+            className="ml-auto inline-flex h-11 shrink-0 items-center rounded-[9px] bg-zinc-100 px-3 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-zinc-200 focus-visible:ring-focus md:h-9 md:bg-transparent md:hover:bg-zinc-100"
           >
             Modifier
           </Link>
@@ -138,10 +139,15 @@ export default async function GoalDetailPage({
             </ListCard>
           ) : (
             <ListCard className="px-4 py-5 text-center">
-              <p className="text-[13px] text-ink-2">
+              <p className="text-[14px] font-strong">
                 {goal.tasks.length === 0
-                  ? "Découpez cet objectif en premières tâches concrètes."
-                  : "Tout est fait pour cet objectif. Bravo."}
+                  ? "Découpez cet objectif"
+                  : "Tout est fait"}
+              </p>
+              <p className="mt-1.5 text-[13px] leading-[1.55] text-ink-2">
+                {goal.tasks.length === 0
+                  ? "Ajoutez une première tâche concrète pour avancer."
+                  : "Bravo — toutes les tâches de cet objectif sont terminées."}
               </p>
             </ListCard>
           )}
