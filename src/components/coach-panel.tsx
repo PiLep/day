@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { askCoach, applyCoachAction } from "@/lib/coach-actions";
 import type { CoachAction, CoachReply } from "@/lib/coach";
 
@@ -22,6 +23,7 @@ const QUICK = [
  * Propose des réajustements réalistes ; l'utilisateur confirme avant toute écriture.
  */
 export function CoachPanel({ openOnMount = false }: { openOnMount?: boolean }) {
+  const router = useRouter();
   const [open, setOpen] = useState(openOnMount);
   const [input, setInput] = useState("");
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
@@ -96,6 +98,7 @@ export function CoachPanel({ openOnMount = false }: { openOnMount?: boolean }) {
           text: follow.message,
         },
       ]);
+      if (result.ok) router.refresh();
     });
   }
 
