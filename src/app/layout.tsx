@@ -10,6 +10,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Sans viewport-fit=cover, env(safe-area-inset-*) vaut 0 sur iOS et la
+  // barre d'onglets passe sous l'indicateur d'accueil.
+  viewportFit: "cover",
   themeColor: "#4f46e5",
 };
 

@@ -36,7 +36,7 @@ export default async function GoalsPage({
 
   return (
     <PageShell>
-      <div className="flex items-baseline justify-between md:items-center">
+      <div className="flex items-baseline justify-between pr-14 md:items-center md:pr-0">
         <div>
           <h1 className="text-[28px] font-strong tracking-[-0.02em] md:text-[30px]">
             Objectifs

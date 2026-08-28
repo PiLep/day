@@ -41,7 +41,7 @@ export default async function TodosPage({
 
   return (
     <PageShell width="medium">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 pr-14 md:pr-0">
         <div>
           <h1 className="text-[28px] font-strong tracking-[-0.02em] md:text-[30px]">
             Tâches
@@ -56,7 +56,11 @@ export default async function TodosPage({
       </div>
 
       {/* Filtre segmenté (§04). */}
-      <div className="mt-3.5 flex rounded-[11px] bg-[#eeeef0] p-[3px] md:mt-5 md:w-80">
+      <div
+        className="mt-3.5 flex rounded-[11px] bg-[#eeeef0] p-[3px] md:mt-5 md:w-80"
+        role="tablist"
+        aria-label="Filtrer les tâches"
+      >
         <Segment
           href="/app/todos"
           active={!showDone}
@@ -88,7 +92,11 @@ export default async function TodosPage({
             ))}
           </ListCard>
         ) : (
-          <EmptyLine>Aucune tâche terminée pour l&apos;instant.</EmptyLine>
+          <EmptyLine
+            title="Aucune tâche terminée"
+            description="Cochez une tâche en attente pour la voir apparaître ici."
+            action={{ href: "/app/todos", label: "Voir les tâches en attente" }}
+          />
         )
       ) : (
         <>
@@ -99,9 +107,11 @@ export default async function TodosPage({
               ))}
             </ListCard>
           ) : (
-            <EmptyLine>
-              Aucune tâche en attente. Tout est à jour.
-            </EmptyLine>
+            <EmptyLine
+              title="Aucune tâche en attente"
+              description="Ajoutez une tâche ci-dessus, ou planifiez-en une depuis le calendrier."
+              action={{ href: "/app/calendar", label: "Ouvrir le calendrier" }}
+            />
           )}
 
           {completed.length > 0 && (
@@ -134,8 +144,9 @@ function Segment({
   return (
     <Link
       href={href}
-      aria-current={active ? "true" : undefined}
-      className={`tnum flex h-[34px] flex-1 items-center justify-center rounded-[9px] text-[13px] transition-colors md:h-8 ${
+      role="tab"
+      aria-selected={active}
+      className={`tnum flex h-11 flex-1 items-center justify-center rounded-[9px] text-[13px] transition-colors focus-visible:ring-focus md:h-8 ${
         active
           ? "bg-surface font-strong text-ink shadow-xs"
           : "font-semibold text-ink-2 hover:text-ink"
@@ -146,10 +157,25 @@ function Segment({
   );
 }
 
-function EmptyLine({ children }: { children: React.ReactNode }) {
+function EmptyLine({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action: { href: string; label: string };
+}) {
   return (
     <ListCard className="mt-3.5 px-4 py-5 text-center md:mt-4">
-      <p className="text-[13px] text-ink-2">{children}</p>
+      <p className="text-[14px] font-strong">{title}</p>
+      <p className="mt-1.5 text-[13px] leading-[1.55] text-ink-2">{description}</p>
+      <Link
+        href={action.href}
+        className="mt-3.5 inline-flex h-11 items-center rounded-[11px] bg-accent-soft px-4 text-[13.5px] font-semibold text-accent transition-colors hover:bg-accent-100 focus-visible:ring-focus"
+      >
+        {action.label}
+      </Link>
     </ListCard>
   );
 }

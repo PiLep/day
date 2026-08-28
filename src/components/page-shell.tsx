@@ -19,7 +19,7 @@ export function PageShell({
 }) {
   return (
     <div
-      className={`mx-auto flex w-full flex-1 flex-col px-5 pt-2.5 pb-28 md:px-12 md:pt-11 md:pb-11 ${WIDTHS[width]} ${className}`}
+      className={`mx-auto flex w-full flex-1 flex-col px-5 pt-2.5 pb-[calc(112px+env(safe-area-inset-bottom))] md:px-12 md:pt-11 md:pb-11 ${WIDTHS[width]} ${className}`}
     >
       {children}
     </div>

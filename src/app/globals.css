@@ -7,8 +7,9 @@
   --color-border: #e4e4e7;
   --color-border-soft: #ececee;
   --color-ink: #18181b;
-  --color-ink-2: #71717a;
-  --color-ink-3: #a1a1aa;
+  /* Secondaire ≥ AA ; tertiaire au plancher AA sur fond clair. */
+  --color-ink-2: #5c5c66;
+  --color-ink-3: #71717a;
 
   --color-accent: #4f46e5;
   --color-accent-hover: #4338ca;
@@ -75,6 +76,15 @@
   }
 }
 
+/* Hover uniquement sur les pointeurs fins — évite le sticky hover au doigt. */
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
 /* Mode sombre : surcharges sur [data-theme="dark"]. */
 [data-theme="dark"] {
   --color-bg: #09090b;
@@ -82,8 +92,8 @@
   --color-border: #27272a;
   --color-border-soft: #232326;
   --color-ink: #fafafa;
-  --color-ink-2: #a1a1aa;
-  --color-ink-3: #71717a;
+  --color-ink-2: #d4d4d8;
+  --color-ink-3: #a1a1aa;
   --color-accent: #818cf8;
   --color-accent-hover: #a5b4fc;
   --color-accent-soft: rgb(99 102 241 / 16%);
@@ -97,6 +107,16 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS Safari zoome sur tout champ dont la police fait moins de 16px, ce qui
+   décadre l'écran à chaque saisie. On impose 16px aux champs sur mobile. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 body {
@@ -116,14 +136,26 @@ body {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 25%, transparent);
 }
 
-/* §05 : remplacer les mouvements par de simples fondus courts. */
+/* §05 : motion opt-in — pas de scale / translate sous reduced-motion. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 80ms !important;
-    animation-timing-function: ease !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 80ms !important;
     transition-property: opacity, background-color, border-color, color !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-daypop,
+  .animate-dayslide {
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-safe-daypop {
+    animation: var(--animate-daypop);
   }
 }

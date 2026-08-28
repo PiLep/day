@@ -39,7 +39,10 @@ export function GoalCard({
           className="size-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: trio.base }}
         />
-        <span className="truncate text-[14.5px] font-semibold tracking-[-0.01em]">
+        <span
+          title={goal.title}
+          className="truncate text-[14.5px] font-semibold tracking-[-0.01em]"
+        >
           {goal.title}
         </span>
         {goal.targetDate && (
@@ -101,7 +104,9 @@ export function GoalMiniCard({
             className="size-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: trio.base }}
           />
-          <span className="truncate text-[13px] font-semibold">{goal.title}</span>
+          <span title={goal.title} className="truncate text-[13px] font-semibold">
+            {goal.title}
+          </span>
           <span
             className="tnum ml-auto shrink-0 text-[12px] font-semibold"
             style={{ color: trio.deep }}
@@ -130,7 +135,9 @@ export function GoalMiniCard({
           className="size-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: trio.base }}
         />
-        <span className="truncate text-[12.5px] font-semibold">{goal.title}</span>
+        <span title={goal.title} className="truncate text-[12.5px] font-semibold">
+          {goal.title}
+        </span>
       </div>
       <ProgressBar
         done={goal.done}
