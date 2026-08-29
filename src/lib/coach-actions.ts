@@ -207,6 +207,31 @@ export async function applyCoachAction(raw: CoachAction): Promise<{ ok: true } |
     return { ok: true };
   }
 
+  if (action.type === "create_goal_habits") {
+    const goal = await prisma.goal.create({
+      data: {
+        userId,
+        title: action.title,
+        color: normalizeGoalColor(DEFAULT_GOAL_COLOR),
+      },
+    });
+    let order = 0;
+    for (const h of action.habits) {
+      await prisma.habit.create({
+        data: {
+          userId,
+          goalId: goal.id,
+          title: h.title,
+          kind: h.kind,
+          target: h.kind === "DAILY" ? 1 : h.target,
+          sortOrder: order++,
+        },
+      });
+    }
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  }
+
   if (action.type === "focus_today") {
     // Date à aujourd'hui les tâches pending dont le titre matche (parmi objectifs / undated / late)
     for (const title of action.taskTitles) {

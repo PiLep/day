@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { addDaysUTC, toDateString } from "@/lib/dates";
+import {
+  decomposeDiscipline,
+  isDisciplineIntent,
+  type HabitBlueprint,
+} from "@/lib/habits";
 
 /** Snapshot factuel du monde Day — le coach ne invente rien d'autre. */
 export type CoachSnapshot = {
@@ -30,6 +35,12 @@ export type CoachAction =
       label: string;
       title: string;
       tasks: { title: string; dueOffsetDays: number | null }[];
+    }
+  | {
+      type: "create_goal_habits";
+      label: string;
+      title: string;
+      habits: HabitBlueprint[];
     }
   | {
       type: "focus_today";
@@ -126,7 +137,10 @@ export function coachReply(input: string, snap: CoachSnapshot): CoachReply {
   }
 
   if (CHIP_INTENTS.objectif.test(text) || text.length > 12) {
-    // Si ça ressemble à une intention d'objectif, on propose un plan.
+    // Objectif long terme → discipline jour/semaine, pas des tâches datées.
+    if (isDisciplineIntent(text)) {
+      return replyDiscipline(text);
+    }
     if (
       CHIP_INTENTS.objectif.test(text) ||
       /^(écrire|apprendre|lancer|finir|préparer|courir)/i.test(text)
@@ -259,6 +273,7 @@ function replyToday(snap: CoachSnapshot): CoachReply {
 }
 
 function replyNewGoal(raw: string): CoachReply {
+  if (isDisciplineIntent(raw)) return replyDiscipline(raw);
   const plan = decomposeGoal(raw);
   return {
     message: `Objectif « ${plan.title} ». Voici un plan léger (4 pas). On peut l’appliquer tel quel — tu pourras tout modifier après.`,
@@ -268,6 +283,28 @@ function replyNewGoal(raw: string): CoachReply {
         label: `Créer « ${plan.title} » + tâches`,
         title: plan.title,
         tasks: plan.tasks,
+      },
+    ],
+  };
+}
+
+function replyDiscipline(raw: string): CoachReply {
+  const plan = decomposeDiscipline(raw);
+  const summary = plan.habits
+    .map((h) =>
+      h.kind === "DAILY"
+        ? `« ${h.title} » chaque jour`
+        : `« ${h.title} » ${h.target}× / sem.`
+    )
+    .join(", ");
+  return {
+    message: `Objectif long terme « ${plan.title} ». On pose une discipline, pas des cases one-shot : ${summary}. Tu pourras ajuster les quotas.`,
+    actions: [
+      {
+        type: "create_goal_habits",
+        label: `Créer « ${plan.title} » + discipline`,
+        title: plan.title,
+        habits: plan.habits,
       },
     ],
   };
@@ -294,6 +331,18 @@ export const coachActionSchema = z.discriminatedUnion("type", [
       z.object({
         title: z.string().min(1).max(300),
         dueOffsetDays: z.number().int().nullable(),
+      })
+    ),
+  }),
+  z.object({
+    type: z.literal("create_goal_habits"),
+    label: z.string(),
+    title: z.string().min(1).max(200),
+    habits: z.array(
+      z.object({
+        title: z.string().min(1).max(200),
+        kind: z.enum(["DAILY", "WEEKLY"]),
+        target: z.number().int().min(1).max(21),
       })
     ),
   }),

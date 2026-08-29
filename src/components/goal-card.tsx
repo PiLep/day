@@ -11,6 +11,8 @@ export type GoalCardData = {
   targetDate: Date | null;
   done: number;
   total: number;
+  /** Libellé sous la barre : « tâches » ou « cette semaine ». */
+  progressLabel?: "tâches" | "cette semaine";
 };
 
 /**
@@ -66,7 +68,7 @@ export function GoalCard({
 
       <div className="mt-1.5 flex justify-between">
         <span className="tnum text-[11.5px] text-ink-3">
-          {goal.done} / {goal.total} tâches
+          {goal.done} / {goal.total} {goal.progressLabel ?? "tâches"}
         </span>
         <span
           className="tnum text-[12px] font-semibold"
@@ -148,7 +150,7 @@ export function GoalMiniCard({
       />
       <div className="mt-[7px] flex justify-between gap-1">
         <span className="tnum truncate text-[11px] text-ink-3">
-          {goal.done} / {goal.total} tâches
+          {goal.done} / {goal.total} {goal.progressLabel ?? "tâches"}
         </span>
         <span
           className="tnum text-[11px] font-semibold"

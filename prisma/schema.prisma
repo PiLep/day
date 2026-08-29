@@ -19,6 +19,8 @@ model User {
   sessions      Session[]
   goals         Goal[]
   tasks         Task[]
+  habits        Habit[]
+  habitLogs     HabitLog[]
 }
 
 model Account {
@@ -66,6 +68,7 @@ model Goal {
   createdAt   DateTime  @default(now())
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tasks       Task[]
+  habits      Habit[]
 
   @@index([userId])
 }
@@ -85,4 +88,46 @@ model Task {
   @@index([userId])
   @@index([goalId])
   @@index([userId, dueDate])
+}
+
+/**
+ * Discipline récurrente liée à un objectif long terme.
+ * DAILY  = case du jour (ex. pas d'alcool)
+ * WEEKLY = quota de la semaine (ex. 3 joggings, 10 repas légers)
+ */
+model Habit {
+  id        String    @id @default(cuid())
+  userId    String
+  goalId    String?
+  title     String
+  kind      HabitKind @default(DAILY)
+  /// Cible : 1 pour le quotidien ; N pour le quota hebdo.
+  target    Int       @default(1)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal      Goal?     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  logs      HabitLog[]
+
+  @@index([userId])
+  @@index([goalId])
+}
+
+model HabitLog {
+  id         String   @id @default(cuid())
+  habitId    String
+  userId     String
+  /// Jour UTC où l'occurrence a eu lieu (minuit).
+  occurredOn DateTime
+  createdAt  DateTime @default(now())
+  habit      Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([habitId, occurredOn])
+  @@index([userId, occurredOn])
+}
+
+enum HabitKind {
+  DAILY
+  WEEKLY
 }

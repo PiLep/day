@@ -56,6 +56,29 @@ describe("coachReply", () => {
     }
   });
 
+  it("propose une discipline pour un objectif poids", () => {
+    const snap: CoachSnapshot = {
+      ...emptySnap(),
+      goals: [
+        {
+          id: "g1",
+          title: "Autre",
+          done: 0,
+          total: 1,
+          targetDate: null,
+          pendingTitles: ["x"],
+        },
+      ],
+      todayCount: 1,
+    };
+    const reply = coachReply("je veux atteindre 80kg", snap);
+    expect(reply.actions[0]?.type).toBe("create_goal_habits");
+    if (reply.actions[0]?.type === "create_goal_habits") {
+      expect(reply.actions[0].habits.some((h) => h.kind === "WEEKLY")).toBe(true);
+      expect(reply.actions[0].habits.some((h) => h.kind === "DAILY")).toBe(true);
+    }
+  });
+
   it("crée un plan pour une intention d'objectif", () => {
     const snap: CoachSnapshot = {
       ...emptySnap(),
