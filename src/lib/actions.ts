@@ -12,6 +12,8 @@ import {
 import { parseDateInput as parseDate } from "@/lib/dates";
 import { normalizeGoalColor } from "@/lib/goal-colors";
 import { requireUserId } from "@/lib/session";
+import { todayRangeUTC } from "@/lib/queries";
+import { weekRangeUTC } from "@/lib/habits";
 
 const goalSchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -131,5 +133,140 @@ export async function syncAllTasks() {
     where: { id: userId },
     data: { lastSyncedAt: new Date() },
   });
+  revalidatePath("/app", "layout");
+}
+
+const habitSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  kind: z.enum(["DAILY", "WEEKLY"]),
+  target: z.coerce.number().int().min(1).max(21),
+});
+
+export async function createHabit(formData: FormData) {
+  const userId = await requireUserId();
+  const parsed = habitSchema.safeParse({
+    title: formData.get("title"),
+    kind: formData.get("kind") || "DAILY",
+    target: formData.get("target") || "1",
+  });
+  if (!parsed.success) return;
+
+  const goalIdRaw = formData.get("goalId");
+  const goalId =
+    typeof goalIdRaw === "string" && goalIdRaw.length > 0
+      ? (await prisma.goal.findFirst({ where: { id: goalIdRaw, userId } }))?.id ??
+        null
+      : null;
+
+  const kind = parsed.data.kind;
+  const target = kind === "DAILY" ? 1 : parsed.data.target;
+
+  const maxOrder = await prisma.habit.aggregate({
+    where: { userId, goalId: goalId ?? undefined },
+    _max: { sortOrder: true },
+  });
+
+  await prisma.habit.create({
+    data: {
+      userId,
+      goalId,
+      title: parsed.data.title,
+      kind,
+      target,
+      sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
+    },
+  });
+  revalidatePath("/app", "layout");
+}
+
+/** Coche / décoche une habitude du jour (DAILY). */
+export async function toggleHabitToday(habitId: string) {
+  const userId = await requireUserId();
+  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+  if (!habit || habit.kind !== "DAILY") return;
+
+  const { start } = todayRangeUTC();
+  const existing = await prisma.habitLog.findFirst({
+    where: { habitId, userId, occurredOn: start },
+  });
+  if (existing) {
+    await prisma.habitLog.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.habitLog.create({
+      data: { habitId, userId, occurredOn: start },
+    });
+  }
+  revalidatePath("/app", "layout");
+}
+
+/** Ajoute une occurrence (quota hebdo, ou daily si pas encore fait). */
+export async function logHabitOnce(habitId: string) {
+  const userId = await requireUserId();
+  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+  if (!habit) return;
+
+  const { start: today } = todayRangeUTC();
+  const week = weekRangeUTC(today);
+
+  if (habit.kind === "DAILY") {
+    const existing = await prisma.habitLog.findFirst({
+      where: { habitId, userId, occurredOn: today },
+    });
+    if (existing) return;
+    await prisma.habitLog.create({
+      data: { habitId, userId, occurredOn: today },
+    });
+    revalidatePath("/app", "layout");
+    return;
+  }
+
+  const count = await prisma.habitLog.count({
+    where: {
+      habitId,
+      userId,
+      occurredOn: { gte: week.start, lt: week.end },
+    },
+  });
+  if (count >= habit.target) return;
+
+  await prisma.habitLog.create({
+    data: { habitId, userId, occurredOn: today },
+  });
+  revalidatePath("/app", "layout");
+}
+
+/** Retire la dernière occurrence de la semaine. */
+export async function unlogHabitOnce(habitId: string) {
+  const userId = await requireUserId();
+  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+  if (!habit) return;
+
+  const { start: today } = todayRangeUTC();
+  const week = weekRangeUTC(today);
+
+  if (habit.kind === "DAILY") {
+    await prisma.habitLog.deleteMany({
+      where: { habitId, userId, occurredOn: today },
+    });
+    revalidatePath("/app", "layout");
+    return;
+  }
+
+  const last = await prisma.habitLog.findFirst({
+    where: {
+      habitId,
+      userId,
+      occurredOn: { gte: week.start, lt: week.end },
+    },
+    orderBy: [{ occurredOn: "desc" }, { createdAt: "desc" }],
+  });
+  if (!last) return;
+  await prisma.habitLog.delete({ where: { id: last.id } });
+  revalidatePath("/app", "layout");
+}
+
+export async function deleteHabit(habitId: string) {
+  const userId = await requireUserId();
+  await prisma.habit.deleteMany({ where: { id: habitId, userId } });
   revalidatePath("/app", "layout");
 }

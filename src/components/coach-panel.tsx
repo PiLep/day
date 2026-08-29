@@ -15,7 +15,7 @@ type Bubble = {
 const QUICK = [
   "Réajuster mes retards",
   "Que faire aujourd'hui ?",
-  "Je veux écrire un roman",
+  "Atteindre 80 kg",
 ] as const;
 
 /**
